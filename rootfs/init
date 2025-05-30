@@ -1,0 +1,6 @@
+#!/bin/sh
+mount -t proc none /proc
+mount -t sysfs none /sys
+insmod /modules/hello.ko 2>/dev/null
+echo "歡迎進入 BusyBox 環境"
+exec /bin/sh
