@@ -29,16 +29,19 @@ sudo mknod -m 666 rootfs/dev/null c 1 3 || true
 sudo mknod -m 600 rootfs/dev/console c 5 1 || true
 
 # 拷貝自訂模組
-echo "自訂模組"
-if [ -f my_modules/hello.ko ]; then
-    echo "hello.ko"
-    cp my_modules/hello.ko rootfs/modules/
-    
-fi
-if [ -f "$PROJECT_DIR/my_modules/hello_sys/hello_sys.ko" ]; then
-    echo "✔ 複製 hello_sys.ko 至 rootfs/modules/"
-    cp "$PROJECT_DIR/my_modules/hello_sys/hello_sys.ko" "$ROOTFS_DIR/modules/"
-fi
+
+echo " 搜尋所有自訂模組..."
+
+MODULES_DIR="$PROJECT_DIR/my_modules"
+DEST_DIR="$ROOTFS_DIR/modules"
+
+mkdir -p "$DEST_DIR"
+
+find "$MODULES_DIR" -name "*.ko" | while read -r mod; do
+    modname=$(basename "$mod")
+    echo "✔ 複製 $modname 至 $DEST_DIR/"
+    cp "$mod" "$DEST_DIR/"
+done
 # 建立 init 腳本
 cat <<EOF > rootfs/init
 #!/bin/sh

@@ -43,14 +43,14 @@ cp arch/arm64/boot/Image "$IMAGE_OUT"
 
 # Build custom modules
 if [ -d "$MODULE_DIR" ]; then
-  info "編譯自訂 modules..."
-  #make -C "$LINUX_DIR" M="$MODULE_DIR/hellow" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules
-  #make -C "$LINUX_DIR" M="$MODULE_DIR/hellow_sys" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules
-  make -C "$LINUX_DIR" M="$MODULE_DIR/hello" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules > /dev/null
-  make -C "$LINUX_DIR" M="$MODULE_DIR/hello_sys" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules > /dev/nullfi
-
-
-
+  info "自動編譯所有子目錄 modules..."
+  for dir in "$MODULE_DIR"/*; do
+    if [ -d "$dir" ] && [ -f "$dir/Makefile" ]; then
+      mod_name=$(basename "$dir")
+      info "正在編譯模組: $mod_name"
+      make -C "$LINUX_DIR" M="$dir" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules > /dev/null
+    fi
+  done
 fi
 
 info "Kernel 與 Modules 編譯完成 ✅"
