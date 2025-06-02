@@ -32,4 +32,5 @@ static void __exit led1_exit(void) {
 
 module_init(led1_init);
 module_exit(led1_exit);
+MODULE_DESCRIPTION("LED 1 控制模組：試圖開燈、延遲、關閉");
 MODULE_LICENSE("GPL");
