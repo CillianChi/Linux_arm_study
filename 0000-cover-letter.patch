@@ -1,0 +1,20 @@
+From 3f410ccb55d1b0fc0c535f9080f91c7d340949f8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=B4=80=E6=98=B1=E4=B8=9E?=
+ <yucheng@jiyuchengdeMacBook-Pro.local>
+Date: Sat, 31 May 2025 15:32:35 +0800
+Subject: [PATCH 0/1] *** SUBJECT HERE ***
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+*** BLURB HERE ***
+
+紀昱丞 (1):
+  printk: Add test printk line for demo
+
+ my_modules/hello/hello.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+-- 
+2.49.0
+

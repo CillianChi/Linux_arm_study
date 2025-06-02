@@ -4,6 +4,7 @@
 static int __init hello_init(void)
 {
     printk(KERN_INFO "Hello, kernel!\n");
+    printk(KERN_INFO "Hello from patch example!\n");
     return 0;
 }
 

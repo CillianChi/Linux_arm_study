@@ -1,0 +1,1 @@
+savedcmd_led_common.ko := aarch64-linux-gnu-ld -r -EL  -maarch64elf -z noexecstack --build-id=sha1  -T /Project/linux/scripts/module.lds -o led_common.ko led_common.o led_common.mod.o .module-common.o
