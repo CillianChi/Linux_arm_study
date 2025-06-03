@@ -3,7 +3,7 @@
 短期目標熟悉玩Linux Kernel運作   
 長期目標是優化架構+自訂tool chain (mac)
 
-使用Tool : Linux sorce code / Git / Docker / Homebrew / Qemu / Busybox
+使用Tool : Linux sorce code / Git / Docker / Homebrew / Qemu / Busybox   
 1.在Mac Os(M系)建立Arm64 + Linux Kernel 環境--Done--    
 2.自定義自動化 kernel module 測試（Shell Script + Dockerfile+ Make）--Done--    
 3.自定義DTS並對應 Platform Driver，完成從 driver binding 的驗證。--on-going--     
