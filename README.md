@@ -1,6 +1,6 @@
 # Linux Kernel 計劃
 此專案目的用於自我學習，以下是我的學習規劃。   
-短期目標熟悉玩Linux Kernel運作
+短期目標熟悉玩Linux Kernel運作   
 長期目標是優化架構+自訂tool chain (mac)
 
 使用Tool : Linux sorce code / Git / Docker / Homebrew / Qemu / Busybox
