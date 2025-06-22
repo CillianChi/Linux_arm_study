@@ -1,0 +1,146 @@
+OUTPUT_DIR := ./output
+IMAGE := RTOSDemo.elf
+
+# 根目錄，依實際路徑調整
+FREERTOS_ROOT = ./../../../..
+
+CC = riscv64-unknown-elf-gcc
+LD = riscv64-unknown-elf-gcc
+SIZE = riscv64-unknown-elf-size
+
+# 取得 gcc 版本
+GCC_VERSION = $(shell $(CC) --version | grep ^$(CC) | sed 's/^.* //g' | awk -F. '{ printf("%d%02d%02d"), $$1, $$2, $$3 }')
+GCC_VERSION_NEED_ZICSR = "110100"
+
+ifeq ($(RVA23),1)
+  MARCH = rv64imafdcv_zicsr_zicntr_zihpm_ziccif_ziccrse_ziccamoa_zicclsm_za64rs_zihintpause_zic64b_zicbom_zicbop_zicboz_zfhmin_zkt_zvfhmin_zvbb_zvkt_zihintntl_zawrs
+  MABI = lp64d
+  MCMODEL = medany
+  CFLAGS+=-DconfigENABLE_FPU=1 -DconfigENABLE_VPU=1
+  $(info  Using RVA23 build)
+else
+  ifeq ($(shell test $(GCC_VERSION) -ge $(GCC_VERSION_NEED_ZICSR) && echo true),true)
+    MARCH=rv32imac_zicsr
+  else
+    MARCH=rv32imac
+  endif
+  MABI=ilp32
+  MCMODEL=medlow
+  $(info  Using RV32 build)
+endif
+
+KERNEL_DIR = $(FREERTOS_ROOT)/Source
+KERNEL_PORT_DIR = $(KERNEL_DIR)/portable/GCC/RISC-V
+DEMO_ROOT = $(FREERTOS_ROOT)/Demo
+COMMON_DEMO_FILES = $(DEMO_ROOT)/Common/Minimal
+DEMO_PROJECT = $(DEMO_ROOT)/RISC-V_RV32_QEMU_VIRT_GCC
+
+# include path
+INCLUDE_DIRS = \
+	-I$(KERNEL_DIR)/include \
+	-I$(KERNEL_PORT_DIR) \
+	-I$(KERNEL_PORT_DIR)/chip_specific_extensions/RV32I_CLINT_no_extensions \
+	-I$(DEMO_ROOT)/Common/include \
+	-I$(DEMO_PROJECT)
+
+CFLAGS = -fmessage-length=0 \
+	-march=$(MARCH) -mabi=$(MABI) -mcmodel=$(MCMODEL) \
+	-ffunction-sections -fdata-sections -Wno-unused-parameter \
+	-nostartfiles -g3 -Os $(INCLUDE_DIRS)
+
+CFLAGS += --specs=nano.specs -fno-builtin-printf
+
+LDFLAGS = -nostartfiles -Xlinker --gc-sections -Wl,-Map,$(OUTPUT_DIR)/RTOSDemo.map \
+	-T./fake_rom.ld -march=$(MARCH) -mabi=$(MABI) -mcmodel=$(MCMODEL) \
+	--defsym=__stack_size=352 -Wl,--start-group -Wl,--end-group
+
+LDFLAGS += -Wl,--wrap=malloc \
+	-Wl,--wrap=free -Wl,--wrap=open -Wl,--wrap=lseek -Wl,--wrap=read -Wl,--wrap=write \
+	-Wl,--wrap=fstat -Wl,--wrap=stat -Wl,--wrap=close -Wl,--wrap=link -Wl,--wrap=unlink \
+	-Wl,--wrap=execve -Wl,--wrap=fork -Wl,--wrap=getpid -Wl,--wrap=kill -Wl,--wrap=wait \
+	-Wl,--wrap=isatty -Wl,--wrap=times -Wl,--wrap=sbrk -Wl,--wrap=puts \
+	-Wl,--wrap=_malloc -Wl,--wrap=_free -Wl,--wrap=_open -Wl,--wrap=_lseek -Wl,--wrap=_read -Wl,--wrap=_write \
+	-Wl,--wrap=_fstat -Wl,--wrap=_stat -Wl,--wrap=_close -Wl,--wrap=_link -Wl,--wrap=_unlink \
+	-Wl,--wrap=_execve -Wl,--wrap=_fork -Wl,--wrap=_getpid -Wl,--wrap=_kill -Wl,--wrap=_wait \
+	-Wl,--wrap=_isatty -Wl,--wrap=_times -Wl,--wrap=_sbrk -Wl,--wrap=__exit -Wl,--wrap=_puts
+
+# C source files，依專案實際路徑調整
+SRC_C = \
+	$(KERNEL_DIR)/tasks.c \
+	$(KERNEL_DIR)/list.c \
+	$(KERNEL_DIR)/queue.c \
+	$(KERNEL_DIR)/timers.c \
+	$(KERNEL_DIR)/event_groups.c \
+	$(KERNEL_DIR)/stream_buffer.c \
+	$(KERNEL_DIR)/portable/MemMang/heap_4.c \
+	$(KERNEL_PORT_DIR)/port.c \
+	$(DEMO_ROOT)/Common/Minimal/AbortDelay.c \
+	$(DEMO_ROOT)/Common/Minimal/BlockQ.c \
+	$(DEMO_ROOT)/Common/Minimal/blocktim.c \
+	$(DEMO_ROOT)/Common/Minimal/countsem.c \
+	$(DEMO_ROOT)/Common/Minimal/death.c \
+	$(DEMO_ROOT)/Common/Minimal/dynamic.c \
+	$(DEMO_ROOT)/Common/Minimal/EventGroupsDemo.c \
+	$(DEMO_ROOT)/Common/Minimal/GenQTest.c \
+	$(DEMO_ROOT)/Common/Minimal/integer.c \
+	$(DEMO_ROOT)/Common/Minimal/IntSemTest.c \
+	$(DEMO_ROOT)/Common/Minimal/MessageBufferAMP.c \
+	$(DEMO_ROOT)/Common/Minimal/MessageBufferDemo.c \
+	$(DEMO_ROOT)/Common/Minimal/PollQ.c \
+	$(DEMO_ROOT)/Common/Minimal/QPeek.c \
+	$(DEMO_ROOT)/Common/Minimal/QueueOverwrite.c \
+	$(DEMO_ROOT)/Common/Minimal/QueueSet.c \
+	$(DEMO_ROOT)/Common/Minimal/QueueSetPolling.c \
+	$(DEMO_ROOT)/Common/Minimal/recmutex.c \
+	$(DEMO_ROOT)/Common/Minimal/semtest.c \
+	$(DEMO_ROOT)/Common/Minimal/StaticAllocation.c \
+	$(DEMO_ROOT)/Common/Minimal/StreamBufferDemo.c \
+	$(DEMO_ROOT)/Common/Minimal/StreamBufferInterrupt.c \
+	$(DEMO_ROOT)/Common/Minimal/TaskNotify.c \
+	$(DEMO_ROOT)/Common/Minimal/TaskNotifyArray.c \
+	$(DEMO_ROOT)/Common/Minimal/TimerDemo.c \
+	$(DEMO_PROJECT)/main.c \
+	$(DEMO_PROJECT)/main_blinky.c \
+	$(DEMO_PROJECT)/main_full.c \
+	$(DEMO_PROJECT)/ns16550.c \
+	$(DEMO_PROJECT)/riscv-virt.c \
+	./src/printf-stdarg.c
+
+# ASM source files
+SRC_S = \
+	$(KERNEL_PORT_DIR)/portASM.S \
+	./src/start.S \
+	./src/RegTest.S \
+	./src/vector.S
+
+# 物件檔與依賴檔
+OBJS_C = $(patsubst %.c,$(OUTPUT_DIR)/%.o,$(SRC_C))
+OBJS_S = $(patsubst %.S,$(OUTPUT_DIR)/%.o,$(SRC_S))
+OBJS = $(OBJS_C) $(OBJS_S)
+
+DEP_FILES = $(OBJS:.o=.d)
+
+# 編譯 C 檔案規則
+$(OUTPUT_DIR)/%.o : %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+# 編譯 ASM 檔案規則
+$(OUTPUT_DIR)/%.o : %.S
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+all: $(OUTPUT_DIR)/$(IMAGE)
+
+$(OUTPUT_DIR)/$(IMAGE): $(OBJS)
+	@echo ""
+	@echo "--- Linking final ELF ---"
+	$(LD) $(OBJS) $(LDFLAGS) -o $@
+	$(SIZE) $@
+
+-include $(DEP_FILES)
+
+clean:
+	rm -rf $(OUTPUT_DIR)
+
+.PHONY: all clean

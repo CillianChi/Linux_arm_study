@@ -1,0 +1,13 @@
+
+config PLATFORM_GENERIC_MY_QEMU_VIRT
+    bool "My QEMU Virt Platform"
+    # 使用 CLINT timer，必要
+    select PLATFORM_HAS_TIMER_VALUE
+    # 表示我們會支援 m-mode fault delegation
+    select PLATFORM_HAS_MFAULTS_DELEGATION
+    # 告知 OpenSBI 會初始化 PLIC 中斷控制器
+    select PLATFORM_NEEDS_PLIC
+    # 告知 OpenSBI 初始化 UART（串列輸出用）
+    select PLATFORM_HAS_UART
+    # 預設啟用（如果平台名稱為 generic/my-qemu-virt）
+    default y if PLATFORM=generic/my-qemu-virt

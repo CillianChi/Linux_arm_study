@@ -1,0 +1,9 @@
+#!/bin/sh
+mount -t proc none /proc
+mount -t sysfs none /sys
+insmod /modules/hello.ko 2>/dev/null
+#insmod /modules/hello_sys.ko 2>/dev/null
+insmod /modules/led_common.ko 2>/dev/null
+insmod /modules/led1_task.ko 2>/dev/null
+insmod /modules/led2_task.ko 2>/dev/null
+exec /bin/sh
