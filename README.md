@@ -1,30 +1,53 @@
-# Linux Kernel 計劃
-此專案目的用於自我學習，以下是我的學習規劃。   
-短期目標熟悉玩Linux Kernel運作   
-長期目標是優化架構+自訂tool chain (mac)
+# FreeRTOS + RISC-V / ARM 多架構 RTOS 實驗與開發平台
 
-使用Tool : Linux sorce code / Git / Docker / Homebrew / Qemu / Busybox
-1.在Mac Os(M系)建立Arm64 + Linux Kernel 環境--Done--    
-2.自定義自動化 kernel module 測試（Shell Script + Dockerfile+ Make）--Done--    
-3.自定義DTS並對應 Platform Driver，完成從 driver binding 的驗證。--on-going--     
-4.優化 kernel scheduling 與 driver lifecycle 調用資源 。
+## 1. 專案簡介
+
+本專案為針對嵌入式系統開發所建立的整合式作業平台，支援多種架構與開源作業系統模擬，並透過 Docker 統一開發環境與工具鏈管理。
+
+### 支援平台架構
+
+- QEMU_virt 虛擬平台
+  - ARM + Linux Kernel(no)
+  - ARM + FreeRTOS (no)
+  - RISC-V + Linux Kernel (no)
+  - RISC-V + FreeRTOS（目前已完成）
+  
+### 已完成功能
+
+1. Docker-based 多平台控管與工具鏈整合
+2. DTS / OpenSBI 整合與硬體啟動流程驗證
+3. FreeRTOS RTOS 核心功能實作（目前以 RISC-V 為主）
+   - 任務建立與優先權排程
+   - 任務同步與中斷整合（Queue / Semaphore / Task Notification）
+   - 記憶體與堆疊使用狀態監控
+   - RISC-V 架構下自定中斷處理（trap handler / mtvec / CLINT）(on-going)
 
 
+## 2. 開發環境與開源資源
+
+### 開發平台
+- 主機系統：macOS (M-series) + Docker 統一建構開發環境
+- 模擬器：QEMU (支援 riscv32 / riscv64 / arm)
+
+### Toolchain 支援
+- [riscv64-unknown-elf-gcc](https://github.com/riscv-collab/riscv-gnu-toolchain)（for RISC-V 64-bit）
+- [riscv32-unknown-elf-gcc](https://github.com/riscv-collab/riscv-gnu-toolchain)（for RISC-V 32-bit）
+- riscv64-linux-gnu
 
 
+### 作業系統與啟動元件
+- FreeRTOS：RTOS 核心（[FreeRTOS GitHub](https://github.com/FreeRTOS/FreeRTOS)）
+- Linux Kernel：預計支援（主線整合中）
+- OpenSBI：支援 RISC-V 啟動流程（[OpenSBI GitHub](https://github.com/riscv-software-src/opensbi)）
+- DTS / Linker script：用於設備樹配置與記憶體映射
+
+### Dockerfile 預設工具（開發環境整合）
+- Python / build-essential / git
+- Toolchains（riscv / arm）
+- QEMU / GDB / UART 模擬輸出工具
 
 
-
-
-
-
-
-
-
-# Mac系統編譯 Linux Kernerl
-## 安裝 Homebrew 
-+ 連結：https://brew.sh/
-+ 功能：Homebrew 是 macOS 上的「套件管理工具」，就像 Linux 裡的 apt、yum。它幫你安裝 Unix 工具、編譯器、模擬器… 讓 macOS 具備像 Linux 的開發環境。
+## 3. 開發環境與開建立
 
 ### <p>安裝</p>
 <pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -46,11 +69,6 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 <pre><code>brew install git make wget ncurses qemu
 </code></pre>
 
-+ git：版本控制工具，用於 clone Linux kernel 原始碼等。
-+ make：編譯工具，用來執行 Makefile 指定的 kernel build 流程。
-+ wget：下載工具，可用來抓 kernel 或其他工具鏈。
-+ ncurses：終端 UI 函式庫，kernel config 選單（如 make menuconfig）會使用它。
-+ qemu：模擬器，用於在 macOS 上模擬 ARM64 的硬體平台，方便測試 kernel。
 ### <p>安裝TooLChains</p>
 三方 Homebrew Tap（軟體來源），由 messense 維護，專門提供交叉編譯工具鏈，例如 aarch64-unknown-linux-gnu-gcc。
 <pre><code>  brew tap messense/macos-cross-toolchains
@@ -70,3 +88,4 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 <pre><code>  aarch64-unknown-linux-gnu-gcc --version
 </code></pre>
 
+/Users/yucheng/Documents
