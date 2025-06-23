@@ -1,4 +1,4 @@
-# FreeRTOS + RISC-V / ARM 多架構 RTOS 實驗與開發平台
+# FreeRTOS / Linux Kernel + RISC-V / ARM 多架構 RTOS 實驗與開發平台
 
 ## 1. 專案簡介
 
