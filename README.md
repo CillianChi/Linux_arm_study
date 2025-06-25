@@ -8,8 +8,7 @@
 
 - QEMU_virt 虛擬平台
   - ARM + Linux Kernel(Done)
-  - ARM + FreeRTOS (no)
-  - RISC-V + Linux Kernel (no)
+  - ARM + FreeRTOS (Done)
   - RISC-V + FreeRTOS（Done）
   
 ### 已完成功能
@@ -17,18 +16,12 @@
 1. Docker-based 多平台控管與工具鏈整合
 2. DTS / OpenSBI 整合與硬體啟動流程驗證
 3. FreeRTOS RTOS 核心功能實作
-   - OpenSBI 整合與硬體啟動流程驗證
-   - 任務建立與優先權排程
-   - 任務同步與中斷整合（Queue / Semaphore / Task Notification）
-   - 記憶體與堆疊使用狀態監控
-   - 客製化Uart設定
-   - RISC-V 架構下自定中斷處理（trap handler / mtvec / CLINT）(on-going)
+   - 基礎模組：Queue / Task / Semaphore / Stack / Heap / Tick Timer / Task Notification / Scheduler
+   - 驅動周邊：SysTick / Uart / CLINT 
+
 4. Linux Kernel 架構實作與驗證（於 QEMU ARM 平台）
    - 串接 HAL（Device Tree）、Kernel 驅動模組與 User-space 工具，建構完整 Linux 系統運作架構 
    - 開發自訂 Kernel Module，並支援與使用者工具互動
-  
-  
-  
 
 
 ## 2. 開發環境與開源資源
