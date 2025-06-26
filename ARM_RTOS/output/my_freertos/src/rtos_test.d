@@ -7,7 +7,8 @@ output/my_freertos/src/rtos_test.o: my_freertos/src/rtos_test.c \
  FreeRTOS/include/list.h my_freertos/include/uart.h \
  FreeRTOS/include/queue.h FreeRTOS/include/task.h \
  FreeRTOS/include/semphr.h FreeRTOS/include/queue.h \
- my_freertos/include/rtos_test.h
+ my_freertos/include/rtos_test.h my_freertos/my_coremark/coremark.h \
+ my_freertos/my_coremark/core_portme.h
 FreeRTOS/include/FreeRTOS.h:
 my_freertos/include/FreeRTOSConfig.h:
 FreeRTOS/include/projdefs.h:
@@ -23,3 +24,5 @@ FreeRTOS/include/task.h:
 FreeRTOS/include/semphr.h:
 FreeRTOS/include/queue.h:
 my_freertos/include/rtos_test.h:
+my_freertos/my_coremark/coremark.h:
+my_freertos/my_coremark/core_portme.h:

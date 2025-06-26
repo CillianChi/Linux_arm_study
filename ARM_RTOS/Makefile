@@ -15,6 +15,7 @@ CFLAGS += -I$(FREERTOS_ROOT)/include
 CFLAGS += -I$(FREERTOS_ROOT)/portable/GCC/ARM_CM3
 CFLAGS += -I$(USER_SRC)
 CFLAGS += -I$(USER_SRC)/include -I$(USER_SRC)/src
+CFLAGS += -I$(USER_SRC)/my_coremark    # <<== 新增這一行
 
 LDFLAGS += -T $(USER_SRC)/linker_qemu.ld
 LDFLAGS += -nostartfiles -Wl,--gc-sections -Wl,--no-warn-rwx-segments
@@ -32,7 +33,14 @@ SRC_C := \
     $(USER_SRC)/src/uart.c \
     $(USER_SRC)/src/interrupt_stubs.c \
     $(USER_SRC)/src/rtos_test.c \
-    $(USER_SRC)/src/main.c
+    $(USER_SRC)/src/main.c \
+    $(USER_SRC)/src/syscalls.c \
+    $(USER_SRC)/my_coremark/core_main.c \
+    $(USER_SRC)/my_coremark/core_list_join.c \
+    $(USER_SRC)/my_coremark/core_matrix.c \
+    $(USER_SRC)/my_coremark/core_state.c \
+    $(USER_SRC)/my_coremark/core_util.c \
+    $(USER_SRC)/my_coremark/core_portme.c
 
 SRC_S := \
     $(USER_SRC)/startup_qemu.S

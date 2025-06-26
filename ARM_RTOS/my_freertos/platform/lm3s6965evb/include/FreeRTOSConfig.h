@@ -1,13 +1,14 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
+/* Cortex-M Interrupt handlers */
+#define vPortSVCHandler        SVC_Handler
+#define xPortPendSVHandler     PendSV_Handler
+#define xPortSysTickHandler    SysTick_Handler
 
-#define vPortSVCHandler    SVC_Handler
-#define xPortPendSVHandler PendSV_Handler
-#define xPortSysTickHandler SysTick_Handler
-
-#define __NVIC_PRIO_BITS          3
+#define __NVIC_PRIO_BITS       3
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY    (5 << (8 - __NVIC_PRIO_BITS))
+
 #define configCPU_CLOCK_HZ             ( 25000000UL )
 #define configTICK_RATE_HZ             ( ( TickType_t ) 1000 )
 #define configUSE_PREEMPTION           1
@@ -18,7 +19,7 @@
 #define configMINIMAL_STACK_SIZE       ( ( unsigned short ) 128 )
 #define configTOTAL_HEAP_SIZE          ( ( size_t ) ( 8 * 1024 ) )
 #define configMAX_TASK_NAME_LEN        ( 16 )
-#define configUSE_TRACE_FACILITY       0
+#define configUSE_TRACE_FACILITY       1   // ✅ 可觀察任務資訊
 #define configUSE_16_BIT_TICKS         0
 #define configIDLE_SHOULD_YIELD        1
 

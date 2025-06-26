@@ -2,6 +2,8 @@
 #include "task.h"
 #include "uart.h"
 #include "rtos_test.h"
+
+
 void vTaskHello(void *pvParameters)
 {
     (void) pvParameters;
@@ -22,18 +24,28 @@ void vTaskBlink(void *pvParameters)
     }
 }
 
-
 int main(void)
 {
-    uart_puts("RTOS Start2222\n");
-
-    rtos_test_entry();  // 呼叫集中測試入口
-
-    vTaskStartScheduler();
-
-    while (1); // 永遠不應該進入這裡
+    uart_init();  // 初始化 UART
+    uart_puts("RTOS Start222222\n");
+    rtos_test_entry();
+    for(;;);
 }
+static int tick_counter = 0;
 
+void vApplicationTickHook(void)
+{
+    tick_counter++;
+    if (tick_counter >= 10)
+    {
+        tick_counter = 0;
+        g_tickCount_start = xTaskGetTickCount();
+
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        vTaskNotifyGiveFromISR(xIsrMeasureTask, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    }
+}
 // 堆疊溢位處理 Hook（configCHECK_FOR_STACK_OVERFLOW 啟用時會需要）
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {

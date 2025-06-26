@@ -34,6 +34,7 @@ SECTIONS
     *(COMMON)
     . = ALIGN(4);
     _ebss = .;
+    _end = .;
   } > RAM
 
   ._stack :

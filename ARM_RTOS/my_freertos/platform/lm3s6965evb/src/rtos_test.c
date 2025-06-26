@@ -4,7 +4,7 @@
 #include "queue.h"
 #include "semphr.h"
 #include "rtos_test.h"
-#include "coremark.h"
+
 
 //================Queue===================
 static TaskHandle_t xProducerHandle = NULL;
@@ -49,15 +49,8 @@ TaskHandle_t xIsrMeasureTask = NULL;
 #define TIMER0_ENABLE    (1 << 7)
 #define TIMER0_PERIODIC  (1 << 6)
 #define TIMER0_32BIT     (1 << 1)
-void enable_dwt(void);
-void matrix_test(void);
-void list_join_test(void);
-void state_test(void);
-extern void coremark_main(void);
 
-TaskHandle_t xCoreMatrixHandle = NULL;
-TaskHandle_t xCoreListHandle = NULL;
-TaskHandle_t xCoreStateHandle = NULL;
+
 //================blinky===================
 static void task_hello(void *pvParameters)
 {
@@ -180,7 +173,7 @@ void EXTI0_IRQHandler(void)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-    g_startCycle = DWT_CYCCNT;  // 記錄進中斷時的週期數
+    g_startCycle = TIMER0_VALUE;  // ← 移到這裡，進入中斷再記錄時間點
     vTaskNotifyGiveFromISR(xIsrMeasureTask, &xHigherPriorityTaskWoken);
 
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -188,22 +181,7 @@ void EXTI0_IRQHandler(void)
 void EXTI1_IRQHandler(void)  // IRQ7
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-    // 隨機選擇某個任務通知（模擬各種中斷觸發場景）
-    static int index = 0;
-    switch (index % 3) {
-        case 0:
-            vTaskNotifyGiveFromISR(xCoreMatrixHandle, &xHigherPriorityTaskWoken);
-            break;
-        case 1:
-            vTaskNotifyGiveFromISR(xCoreListHandle, &xHigherPriorityTaskWoken);
-            break;
-        case 2:
-            vTaskNotifyGiveFromISR(xCoreStateHandle, &xHigherPriorityTaskWoken);
-            break;
-    }
-    index++;
-
+    vTaskNotifyGiveFromISR(xDualIRQTaskHandle, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 static void vUserInterruptTask(void *pvParameters)
@@ -226,87 +204,52 @@ static void vDualIRQTask(void *pvParameters)
     }
 }
 //======ISR latency + Task Notification 結合效能觀察==================
-extern void vIsrMeasureTask(void *pvParameters)
+static void vIsrMeasureTask(void *pvParameters)
 {
     uart_puts("vIsrMeasureTask running...\n");
-    enable_dwt();  // 確保已啟用
+
     for (;;)
     {
-        for (volatile int i = 0; i < 30000000; i++);
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // 阻塞直到收到中斷通知
-        
-        uint32_t end = DWT_CYCCNT;
-        uint32_t latency = g_tickCount_start - g_tickCount_end; //ＤＷＴ島謢數
+
+        g_tickCount_end = xTaskGetTickCount();
+        uint32_t latency = g_tickCount_end - g_tickCount_start;
 
         uart_puts("SysTick → Task latency = ");
         uart_puti(latency);
         uart_puts(" ticks\n");
-
-        // 模擬較長的處理時間 > 1 tick（假設 tick = 1ms）
-        vTaskDelay(pdMS_TO_TICKS(2));  // 故意 delay 2ms
     }
 }
-
-extern void vIsrMeasureTriggerTask(void *pvParameters)
-{
-    uart_puts("TriggerTask running...\n");
-    for (;;)
-    {
-        g_tickCount_start = xTaskGetTickCount();  // 任務執行前記錄 Tick
-        trigger_interrupt_by_software_irq6();     // 觸發中斷
-        vTaskDelay(pdMS_TO_TICKS(10));            // 每 10ms 觸發一次
-    }
-}
-
-extern void vDWT_TestTask(void *pvParameters)
-{
-    enable_dwt();
-    uart_puts("DWT_CYCCNT Test:\n");
-
-    for (volatile int i = 0; i < 1000000; i++);
-    uint32_t t1 = DWT_CYCCNT;
-    for (volatile int i = 0; i < 1000000; i++);
-    uint32_t t2 = DWT_CYCCNT;
-
-
-    uart_puts("DWT Test: ");
-    uart_puthex(t1);
-    uart_puts(" → ");
-    uart_puthex(t2);
-    uart_puts("\n");
-
-    for (;;);
-}
-extern void enable_dwt(void)
+static void enable_dwt(void)
 {
     DEMCR |= (1 << 24);        // TRCENA
     DWT_CTRL |= (1 << 0);      // CYCCNTENA
     DWT_CYCCNT = 0;            // Reset counter
 }
-extern void dwt_init(void)
+static void dwt_init(void)
 {
-    uart_puts("Testing DWT...\n");
     enable_dwt();
-     for (volatile int i = 0; i < 30000000; i++);
+    uart_puts("DWT_CYCCNT Test:\n");
+
+    for (volatile int i = 0; i < 1000000; i++);  // 延遲
     uint32_t t1 = DWT_CYCCNT;
-     for (volatile int i = 0; i < 30000000; i++);
+    for (volatile int i = 0; i < 1000000; i++);  // 再延遲
     uint32_t t2 = DWT_CYCCNT;
 
-    uart_puts("DWT Test: ");
     uart_puthex(t1);
-    uart_puts(" → ");
+    uart_puts("\n");
     uart_puthex(t2);
     uart_puts("\n");
 }
 //===================timer===========================
 
-extern void timer_init(void)
+static void timer_init(void)
 {
     TIMER0_CONTROL = 0; // Disable timer before config
     TIMER0_LOAD = 0xFFFFFFFF;
     TIMER0_CONTROL = TIMER0_ENABLE | TIMER0_32BIT; // Free-running mode
 }
-extern void test_timer_counting(void)
+void test_timer_counting(void)
 {
     uart_puts("Timer Counting Test:\n");
 
@@ -319,70 +262,13 @@ extern void test_timer_counting(void)
         for (volatile int j = 0; j < 100000; j++); // 等一下
     }
 }
-extern void systick_init(uint32_t ticks)
+void systick_init(uint32_t ticks)
 {
     SYSTICK_LOAD = ticks - 1;
     SYSTICK_VAL = 0;
     SYSTICK_CTRL = 0x07; // Enable SysTick, Interrupt, Processor Clock
 }
 
-
-//===========================================
-static void vCoremarkTask(void *pvParameters)
-{
-    uart_puts("Running CoreMark benchmark...\n");
-    coremark_main();  // 執行 CoreMark 測試
-    for (;;); // CoreMark 執行完後不返回
-}
-/*
-extern void core_matrix_task(void *pvParameters)
-{
-    uart_puts("core_matrix_task start...\n");
-    enable_dwt();  // 啟用 DWT（若要量測時間）
-    for (;;)
-    {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // 等待 ISR 通知
-        uint32_t start = DWT_CYCCNT;
-        matrix_test();  // 執行 Matrix 子測試（你需要從 coremark_main() 拆出）
-        uint32_t end = DWT_CYCCNT;
-        uart_puts("core_matrix_task latency: ");
-        uart_puti(end - start);
-        uart_puts(" cycles\n");
-    }
-}
-extern void core_list_task(void *pvParameters)
-{
-    uart_puts("core_list_task start...\n");
-    enable_dwt();  // 啟用 DWT（若要量測時間）
-    for (;;)
-    {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // 等待 ISR 通知
-        uint32_t start = DWT_CYCCNT;
-        list_join_test();  // 執行 Matrix 子測試（你需要從 coremark_main() 拆出）
-        uint32_t end = DWT_CYCCNT;
-        uart_puts("core_list_task latency: ");
-        uart_puti(end - start);
-        uart_puts(" cycles\n");
-    }
-}
-
-extern void core_state_task(void *pvParameters)
-{
-    uart_puts("core_state_task start...\n");
-    enable_dwt();  // 啟用 DWT（若要量測時間）
-
-    for (;;)
-    {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // 等待 ISR 通知
-        uint32_t start = DWT_CYCCNT;
-        state_test();  // 執行 Matrix 子測試（你需要從 coremark_main() 拆出）
-        uint32_t end = DWT_CYCCNT;
-        uart_puts("core_state_task latency: ");
-        uart_puti(end - start);
-        uart_puts(" cycles\n");
-    }
-}
-*/
 //=================================================
 
 
@@ -436,25 +322,18 @@ void rtos_test_entry(void)
     //SysTick_Config(SystemCoreClock / 1);  // 1Hz, 1秒中斷一次
   
     //========================ISR latency + Task Notification=========================
- */
+  
  // 建立任務
- //  xTaskCreate(vIsrMeasureTask, "ISRMeasure", 256, NULL, 3, &xIsrMeasureTask);
- //   xTaskCreate(vIsrMeasureTriggerTask, "TriggerISR", 256, NULL, 3, NULL);
-   
+xTaskCreate(vIsrMeasureTask, "ISRMeasure", configMINIMAL_STACK_SIZE, NULL, 3, &xIsrMeasureTask);
+
+// 啟用 SysTick，每 10ms（假設系統時脈為 50MHz）
+systick_init(SystemCoreClock / 100);  // 10ms 中斷一次
+
     // 修改中斷處理器讓它通知 xIsrMeasureTask
     // 已在 EXTI0_IRQHandler 改成通知 xIsrMeasureTask
     // 啟用並觸發 IRQ6
-     xTaskCreate(vDWT_TestTask, "CoreMark", 256, NULL, 2, NULL);
-    
-    
-     xTaskCreate(vCoremarkTask, "CoreMark", 256, NULL, 2, NULL);
-
-
-   //xTaskCreate(core_matrix_task, "CoreMark_M", 1024, NULL, 2, &xCoreMatrixHandle);
-   //xTaskCreate(core_list_task,   "CoreMark_L", 1024, NULL, 2, &xCoreListHandle);
-   //xTaskCreate(core_state_task,  "CoreMark_S", 1024, NULL, 2, &xCoreStateHandle);
-
-    NVIC_ISER0 |= (1 << 6); // 啟用 IRQ6
-    //NVIC_ISER0 |= (1 << 7); // 啟用 IRQ6
+    NVIC_ISER0 = (1 << 6);   // Enable IRQ6
+    NVIC_ISPR0 = (1 << 6);   // Trigger IRQ6
+      */
 }
 
