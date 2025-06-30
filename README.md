@@ -17,7 +17,7 @@
 2. DTS / OpenSBI 整合與硬體啟動流程驗證
 3. FreeRTOS RTOS 核心功能實作
    - 基礎模組：Queue / Task / Semaphore / Stack / Heap / Tick Timer / Task Notification / Scheduler
-   - 驅動周邊：SysTick / Uart / CLINT 
+   - 驅動周邊：SysTick / Uart / CLINT / NVIC
 
 4. Linux Kernel 架構實作與驗證（於 QEMU ARM 平台）
    - 串接 HAL（Device Tree）、Kernel 驅動模組與 User-space 工具，建構完整 Linux 系統運作架構 
